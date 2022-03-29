@@ -2,7 +2,7 @@ import sys
 import json
 import requests
 
-from modules.checks import check_json, check_crud
+from modules.checks import check_json, check_yaml, check_crud
 from modules.utils import read_data
 from modules.auth import KIBANA_URL, KIBANA_USERNAME, KIBANA_PASSWORD
 
@@ -54,14 +54,16 @@ def handler(event, data):
    
 if __name__ == '__main__':
     data = read_data()
-    context = check_json(data)
-    if not context: raise ValueError(f"data block: '{data}' is not JSON")
-    crud = check_crud()
-    if not crud:
-        print("""Usage:
-    python3 -m elastic_siem [create|read|update|delete]
-""")
-        sys.exit(1)
+
+    context = {}
+    context.update(check_json(data))
+    if not context:
+        # JSON failed - try YAML
+        context.update(check_yaml(data))
+    if not context: raise ValueError(f"data block: '{data}' is not of supported format")
+
+    crud = check_crud().lower()
+    if not crud: raise ValueError(f"No CRUD verb provided")
 
     print(json.dumps(handler(sys.argv[1], context)))
 
