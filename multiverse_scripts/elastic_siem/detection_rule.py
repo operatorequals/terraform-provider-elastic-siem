@@ -4,9 +4,10 @@ import json
 import requests
 
 from modules.checks import check_json, check_yaml, check_toml, check_crud
-from modules.utils import read_data
+from modules.utils import read_data, set_primary_id
 from modules.auth import KIBANA_URL, KIBANA_USERNAME, KIBANA_PASSWORD
 
+KEY_ID = 'rule_id'
 URL = KIBANA_URL
 BASIC_AUTH = (KIBANA_USERNAME, KIBANA_PASSWORD)
 API = {
@@ -73,14 +74,7 @@ if __name__ == '__main__':
         """
         context=context['rule']
 
-    if 'rule_id' not in context:
-        """
-        In case the 'rule_id' is not populated through stdin
-        (as with 'delete' - https://github.com/manasmbellani/terraform-provider-universe#output)
-        it is retrieved through Environment Variable passed by Terraform
-        """
-        if 'rule_id' in os.environ:
-            context['rule_id'] = os.environ['rule_id']
+    set_primary_id(KEY_ID, context)
 
     if not context: raise ValueError(f"data block: '{data}' is not of supported format for '{crud}'")
 
@@ -94,5 +88,6 @@ if __name__ == '__main__':
     else:
         print(json.dumps(output))
 
-    sys.exit(0 if 300 > response_code >= 200 else 255)
+    #import os; print(os.environ, file=sys.stderr); sys.exit(1)
+    sys.exit(0)
 
