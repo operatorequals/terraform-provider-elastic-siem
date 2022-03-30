@@ -1,4 +1,5 @@
 import sys
+import os
 import json
 import requests
 
@@ -28,12 +29,12 @@ API = {
 }
 
 def handler(event, data):
-    data=data['rule']
-    if event in ["read", "delete"]:
+    if event == "exists": event = "read"
+    if event in ["read"]:
         """
-        The READ call does ONLY need 'item_id'
+        The READ call does ONLY need 'rule_id'
         """
-        data = {"rule_id":data["rule_id"]}
+        data = {"rule_id": data["rule_id"]}
 
     response = requests.request(
         url=f'{URL}{API[event]["endpoint"]}',
@@ -45,11 +46,14 @@ def handler(event, data):
             'kbn-xsrf': 'monitoring'
         },
     )
-    return response.json()
+    return response.status_code, response.json()
    
 if __name__ == '__main__':
     data = read_data()
 
+    crud = check_crud()
+    if not crud: raise ValueError(f"No CRUD verb provided")
+ 
     context = {}
     context.update(check_json(data))
     if not context:
@@ -58,10 +62,37 @@ if __name__ == '__main__':
     if not context:
         # YAML failed - try TOML
         context.update(check_toml(data))
-    if not context: raise ValueError(f"data block: '{data}' is not of supported format")
 
-    crud = check_crud()
-    if not crud: raise ValueError(f"No CRUD verb provided")
+    if 'rule' in context:
+        """
+        In case the schema is read from rules writen
+        using the TOML format of 'github.com/elastic/detection-rules',
+        the payload (as documented in the docs:
+        https://www.elastic.co/guide/en/security/current/rules-api-create.html#_request_body)
+        is wrapped in the 'rule' TOML directive.
+        """
+        context=context['rule']
 
-    print(json.dumps(handler(sys.argv[1], context)))
+    if 'rule_id' not in context:
+        """
+        In case the 'rule_id' is not populated through stdin
+        (as with 'delete' - https://github.com/manasmbellani/terraform-provider-universe#output)
+        it is retrieved through Environment Variable passed by Terraform
+        """
+        if 'rule_id' in os.environ:
+            context['rule_id'] = os.environ['rule_id']
+
+    if not context: raise ValueError(f"data block: '{data}' is not of supported format for '{crud}'")
+
+    response_code, output = handler(crud, context)
+
+    if crud == 'exists':
+        """
+        The 'exists' argument does need a 'true/false' output
+        """
+        print('true' if 300 > response_code >= 200 else 'false')
+    else:
+        print(json.dumps(output))
+
+    sys.exit(0 if 300 > response_code >= 200 else 255)
 

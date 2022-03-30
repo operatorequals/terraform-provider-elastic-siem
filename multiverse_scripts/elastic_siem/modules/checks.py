@@ -12,7 +12,8 @@ def check_toml(data):
 def check_yaml(data):
     try:
         import yaml
-        return yaml.safe_load(data)
+        ret = yaml.safe_load(data)
+        return {} if ret is None else ret
     except ImportError:
         print("YAML not supported - use: 'pip install PyYAML'")
     except yaml.parser.ParserError:
@@ -32,7 +33,8 @@ def check_crud():
         "create",
         "read",
         "update",
-        "delete"]:
+        "delete",
+        "exists"]:
         return False
 
     return sys.argv[1]
