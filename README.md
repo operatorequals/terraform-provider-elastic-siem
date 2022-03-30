@@ -80,4 +80,5 @@ resource "universe" "ldap_exception_item" {
 ```
 
 [1] : A TOML file describing a rule, like the ones found in [`elastic/detection-rules`](https://github.com/elastic/detection-rules/blob/main/rules/linux/credential_access_ssh_backdoor_log.toml)
+
 [2] : YAML files (or TOML files) that describe the Exception Container and Item as per the [Elastic Exceptions API](https://www.elastic.co/guide/en/security/current/exceptions-api-overview.html)
