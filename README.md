@@ -82,3 +82,45 @@ resource "universe" "ldap_exception_item" {
 [1] : A TOML file describing a rule, like the ones found in [`elastic/detection-rules`](https://github.com/elastic/detection-rules/blob/main/rules/linux/credential_access_ssh_backdoor_log.toml)
 
 [2] : YAML files (or TOML files) that describe the Exception Container and Item as per the [Elastic Exceptions API](https://www.elastic.co/guide/en/security/current/exceptions-api-overview.html)
+
+
+## Integration with  [`elastic/detection-rules`](https://github.com/elastic/detection-rules)
+
+To use the original Elastic Ruleset with `terraform-provider-elastic-siem`, one needs to:
+
+* Install Terraform Universe Provider
+* Clone this Repository
+* In this Repository clone [`elastic/detection-rules`](https://github.com/elastic/detection-rules)
+* Use the below Terraform file:
+
+`main.tf`
+
+```hcl
+provider "universe" {
+  alias = "detection_rule"
+  environment = {
+...
+  }
+  executor = "python3"
+  script   = "universe_scripts/elastic_siem/detection_rule.py"
+  id_key   = "rule_id"
+}
+
+locals{
+  rule_dir = "${path.module}/rules"
+}
+
+# This Terraform Resource monitors all TOML rules for
+changes.
+resource "universe" "rules" {
+  provider = universe.detection_rule
+  for_each = fileset(local.rule_dir, "**/**.toml")
+
+  config   =<<CONFIG
+${file("${local.rule_dir}/${each.key}")}
+
+# The TOML can be furtherly modified here
+# for addition of Exceptions and Lists
+CONFIG
+
+```
