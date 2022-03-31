@@ -143,3 +143,14 @@ $ docker run -v `pwd`:/opt/src/ \
 /opt/src# terraform apply
 ```
 
+
+## Why?
+
+As I have been working with Elastic SIEM and its Ruleset for a good while, I needed to have my Rules and their Exceptions trackable by Git
+and deployable.
+
+While I tried to use the `detection_rules` CLI tool, it was impossible to work with it in a Automated Pipeline as it [cannot *overwrite* a rule](https://github.com/elastic/detection-rules/issues/612).
+Additionally, the tool could not upload exceptions, as it does not consume the
+[Exceptions API](https://www.elastic.co/guide/en/security/current/exceptions-api-overview.html).
+
+So I created a Terraform Provider for Rules and Exceptions, that is compatible with the `elastic/detection_rules` repo, as it is the primary source of the Elastic Ruleset.
