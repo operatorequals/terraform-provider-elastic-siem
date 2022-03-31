@@ -124,3 +124,22 @@ ${file("${local.rule_dir}/${each.key}")}
 CONFIG
 
 ```
+
+## Usage as Container
+
+Build the container
+```bash
+$ docker build . -t terraform-provider-elastic-siem
+```
+
+Use it with the above `main.tf`:
+
+```bash
+$ docker run -v `pwd`:/opt/src/ \
+             --entrypoint sh \
+ -ti terraform-provider-elastic-siem
+
+/opt/src# terraform init
+/opt/src# terraform apply
+```
+
