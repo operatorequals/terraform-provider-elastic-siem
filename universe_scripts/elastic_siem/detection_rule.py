@@ -35,7 +35,7 @@ def handler(event, data):
         """
         The READ call does ONLY need 'rule_id'
         """
-        data = {"rule_id": data["rule_id"]}
+        data = {KEY_ID: data[KEY_ID]}
 
     response = requests.request(
         url=f'{URL}{API[event]["endpoint"]}',

@@ -34,7 +34,7 @@ def handler(event, data):
         """
         The READ call does ONLY need 'item_id'
         """
-        data = {"item_id":data["item_id"]}
+        data = {KEY_ID: data[KEY_ID]}
     elif event == "update":
         """
         The UPDATE call does not accept 'list_id'
