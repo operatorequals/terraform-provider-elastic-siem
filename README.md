@@ -189,7 +189,7 @@ Use it with the above `main.tf`:
 ```bash
 $ docker run -v `pwd`:/opt/src/ \
              --entrypoint sh \
- -ti terraform-provider-elastic-siem
+ -ti gchr.io/operatorequals/terraform-provider-elastic-siem:master
 
 /opt/src# terraform init
 /opt/src# terraform apply
