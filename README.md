@@ -53,6 +53,30 @@ provider "universe" {
   id_key   = "list_id"
   script   = "universe_scripts/elastic_siem/exception_container.py"
 }
+
+provider "universe" {
+  alias = "list_item"
+  environment = {
+    KIBANA_URL = "..."
+    KIBANA_USERNAME = "..."
+    KIBANA_PASSWORD = "..."
+  }
+  executor = "python3"
+  id_key   = "id"
+  script   = "universe_scripts/elastic_siem/list_item.py"
+}
+
+provider "universe" {
+  alias = "list_container"
+  environment = {
+    KIBANA_URL = "..."
+    KIBANA_USERNAME = "..."
+    KIBANA_PASSWORD = "..."
+  }
+  executor = "python3"
+  id_key   = "id"
+  script   = "universe_scripts/elastic_siem/list_container.py"
+}
 ```
 
 ## Usage
@@ -60,22 +84,49 @@ provider "universe" {
 An example `main.tf` that utilizes the Universe Provider:
 
 ```hcl
-resource "universe" "non_working_hours" {
+resource "universe" "credential_access_ssh_backdoor_log" {
   provider = universe.detection_rule
 
   config   = file("rules/linux/credential_access_ssh_backdoor_log.toml") // [1]
 }
 
-resource "universe" "ldap_exception" {
+resource "universe" "ssh_exception" {
   provider = universe.exception_container
 
   config   = file("sshd_weird_places.yaml") // [2]
 }
 
-resource "universe" "ldap_exception_item" {
+resource "universe" "ssh_exception_in_tmp" {
   provider = universe.exception_item
 
   config   = file("sshd_in_usr_tmp.yaml") // [2]
+}
+
+resource "universe" "internal_ips" {
+  provider = universe.list_container
+
+  // [3]
+  config   =<< LIST
+id: "list_1"
+
+description: |
+  The IPs that are considered Internal and should be excepted
+from Exfiltration Rules
+name: "ips"
+type: "ip_range"
+LIST
+}
+
+resource "universe" "internal_ip_1" {
+  provider = universe.list_container
+
+  // [3]
+  config   =<< LIST_ITEM
+id: list_item_1
+list_id: list_1
+
+value: 10.10.10.0/24
+LIST_ITEM
 }
 ```
 
@@ -83,6 +134,7 @@ resource "universe" "ldap_exception_item" {
 
 [2] : YAML files (or TOML files) that describe the Exception Container and Item as per the [Elastic Exceptions API](https://www.elastic.co/guide/en/security/current/exceptions-api-overview.html)
 
+[3] : YAML files (or TOML files), that describe List and List Items as per the [Elastic Lists API](https://www.elastic.co/guide/en/security/7.16/lists-api-overview.html)
 
 ## Integration with  [`elastic/detection-rules`](https://github.com/elastic/detection-rules)
 
@@ -154,3 +206,4 @@ Additionally, the tool could not upload exceptions, as it does not consume the
 [Exceptions API](https://www.elastic.co/guide/en/security/current/exceptions-api-overview.html).
 
 So I created a Terraform Provider for Rules and Exceptions, that is compatible with the `elastic/detection_rules` repo, as it is the primary source of the Elastic Ruleset.
+
