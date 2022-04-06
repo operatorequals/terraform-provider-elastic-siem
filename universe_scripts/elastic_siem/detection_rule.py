@@ -5,7 +5,7 @@ import requests
 
 from modules.checks import check_json, check_yaml, check_toml, check_crud
 from modules.utils import read_data, set_primary_id
-from modules.auth import KIBANA_URL, KIBANA_USERNAME, KIBANA_PASSWORD
+from modules.auth import KIBANA_URL, KIBANA_USERNAME, KIBANA_PASSWORD, KIBANA_ML_ENABLED
 
 KEY_ID = 'rule_id'
 URL = KIBANA_URL
@@ -78,7 +78,18 @@ if __name__ == '__main__':
 
     if not context: raise ValueError(f"data block: '{data}' is not of supported format for '{crud}'")
 
-    response_code, output = handler(crud, context)
+    if context['type'] == 'machine_learning' and KIBANA_ML_ENABLED != 'true':
+        """
+        In case 'KIBANA_RULES_ML' Environment Variable is set to 'false'
+        and the current rule is of 'machine_learning' type, a mock
+        response is provided,  without conducting the API at all.
+
+        This is so the Provider does not return errors about licensing:
+        {"message": "Your license does not support machine learning. Please upgrade your license.", "status_code": 403}
+        """
+        response_code, output = 200, {"rule_id":context['rule_id']}
+    else:
+        response_code, output = handler(crud, context)
 
     if crud == 'exists':
         """
