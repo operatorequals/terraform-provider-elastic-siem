@@ -148,22 +148,38 @@ To use the original Elastic Ruleset with `terraform-provider-elastic-siem`, one 
 `main.tf`
 
 ```hcl
+# ================= Provider Setup
 provider "universe" {
   alias = "detection_rule"
   environment = {
-...
+/* The below Environment Variables need to be defined before execution,
+or in this block:
+    KIBANA_USERNAME = "elastic"              // <-- Default value
+    KIBANA_PASSWORD = ""                     // <-- Default value
+    KIBANA_URL      = "https:127.0.0.1:5601" // <-- Default value
+*/
   }
   executor = "python3"
+/*
+The Container Image (see below) locates the Provider's scripts
+under root directory:
+  script   = "/universe_scripts/elastic_siem/detection_rule.py"
+
+Use the above when running in the container.
+*/
   script   = "universe_scripts/elastic_siem/detection_rule.py"
   id_key   = "rule_id"
 }
 
+# ================= Rule Loading
 locals{
   rule_dir = "${path.module}/rules"
 }
 
-# This Terraform Resource monitors all TOML rules for
+/*
+This Terraform Resource monitors all TOML rules for
 changes.
+*/
 resource "universe" "rules" {
   provider = universe.detection_rule
   for_each = fileset(local.rule_dir, "**/**.toml")
@@ -174,21 +190,24 @@ ${file("${local.rule_dir}/${each.key}")}
 # The TOML can be furtherly modified here
 # for addition of Exceptions and Lists
 CONFIG
-
+}
 ```
 
 ## Usage as Container
 
-Build the container
+Build and Run the container from the repository.
 ```bash
 $ docker build . -t terraform-provider-elastic-siem
+$ docker run -ti --entrypoint sh terraform-provider-elastic-siem
 ```
 
 Use it with the above `main.tf`:
-
 ```bash
 $ docker run -v `pwd`:/opt/src/ \
-             --entrypoint sh \
+                --entrypoint sh \
+                -e KIBANA_USERNAME=<username> \
+                -e KIBANA_PASSWORD=<password> \
+                -e KIBANA_URL=<url> \
  -ti ghcr.io/operatorequals/terraform-provider-elastic-siem:master
 
 /opt/src# terraform init
