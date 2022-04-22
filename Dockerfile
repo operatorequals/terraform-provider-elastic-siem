@@ -16,7 +16,10 @@ RUN mkdir -p $HOME/.terraform.d/plugins/github.com/operatorequals/universe/${UNI
  && mv terraform-provider-universe_v${UNIVERSE_VERSION} $HOME/.terraform.d/plugins/github.com/operatorequals/universe/${UNIVERSE_VERSION}/linux_amd64/terraform-provider-universe
 
 # Install Python3
-RUN apk add python3 py3-pip \
+RUN apk add --no-cache python3 py3-pip \
  && pip install -r /universe_scripts/requirements.txt
+
+# Install some generic tools
+RUN apk add --no-cache curl jq yq
 
 WORKDIR /opt/src
